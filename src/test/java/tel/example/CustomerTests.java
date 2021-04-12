@@ -13,10 +13,11 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.Rollback;
+
+import tel.example.model.Customer;
+import tel.example.repository.CustomerRepository;
 
 @DataJpaTest
 @TestMethodOrder(OrderAnnotation.class)
@@ -40,15 +41,15 @@ public class CustomerTests {
 	@Order(2)
 	public void testFindCustomerByNameExist() {
 		String name = "Smith";
-		Customer customer = customerRepository.findByName(name);
-		assertThat(customer.getName()).isEqualTo(name);
+		List<Customer> customer = customerRepository.findByName(name);
+		assertThat(((Customer) customer).getName()).isEqualTo(name);
 	}
 	
 	@Test
 	@Order(3)
 	public void testFindCustomerByNameNotExist() {
 		String name = "Smith11";
-		Customer customer = customerRepository.findByName(name);
+		List<Customer> customer = customerRepository.findByName(name);
 		assertNull(customer);
 	}
 
@@ -62,8 +63,8 @@ public class CustomerTests {
 		
 		customerRepository.save(customer);
 		
-		Customer updatedCustomer = customerRepository.findByName(customerName);
-		assertThat(updatedCustomer.getName()).isEqualTo(customerName);
+		List<Customer> updatedCustomer = customerRepository.findByName(customerName);
+		assertThat(((Customer) updatedCustomer).getName()).isEqualTo(customerName);
 	}
 	
 	@Test
