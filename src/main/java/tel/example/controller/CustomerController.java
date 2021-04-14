@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -24,6 +25,7 @@ import tel.example.repository.CustomerRepository;
 @CrossOrigin(origins = "http://localhost:8081")
 @RestController
 @RequestMapping("/customers")
+@Cacheable(value="customers")
 public class CustomerController {
 	
 	@Autowired
