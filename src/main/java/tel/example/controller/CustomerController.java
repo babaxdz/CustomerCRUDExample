@@ -1,12 +1,13 @@
 package tel.example.controller;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+
+import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,107 +17,65 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import tel.example.exception.ResourceNotFoundException;
 import tel.example.model.Customer;
 import tel.example.repository.CustomerRepository;
+import tel.example.service.SequenceGeneratorService;
 
-@CrossOrigin(origins = "http://localhost:8081")
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/customers")
 @Cacheable(value="customers")
 public class CustomerController {
+	@Autowired
+	private CustomerRepository customerRepository;
 	
 	@Autowired
-	CustomerRepository customerRepository;
-	
-	// Retrieve Operation
-	
+	private SequenceGeneratorService sequenceGeneratorService;
+
 	@GetMapping("/get/all")
-	public ResponseEntity<List<Customer>> getAllCustomers(@RequestParam(required = false) String name) {
-	  try {
-	    List<Customer> customers = new ArrayList<Customer>();
-
-	    if (name == null)
-	      customerRepository.findAll().forEach(customers::add);
-	    else
-	      customerRepository.findByName(name).forEach(customers::add);
-	    if (customers.isEmpty()) {
-	      return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-	    }
-
-	    return new ResponseEntity<>(customers, HttpStatus.OK);
-	  } catch (Exception e) {
-	    return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-	  }
+	public List<Customer> getAllCustomers() {
+		return customerRepository.findAll();
 	}
-	
-	// Retrieve Operation
-	
+
 	@GetMapping("/get/{id}")
-	public ResponseEntity<Customer> getCustomerById(@PathVariable("id") Integer id) {
-		try {
-			Optional<Customer> customerData = customerRepository.findById(id);
-
-			if (customerData.isPresent()) {
-				return new ResponseEntity<>(customerData.get(), HttpStatus.OK);
-			} else {
-				return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-			}
-		} catch (Exception e) {
-			return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+	public ResponseEntity<Customer> getCustomerById(@PathVariable(value = "id") Long customerId)
+			throws ResourceNotFoundException {
+		Customer customer = customerRepository.findById(customerId)
+				.orElseThrow(() -> new ResourceNotFoundException("Customer not found for this id :: " + customerId));
+		return ResponseEntity.ok().body(customer);
 	}
-	
-	// Create Operation
+
 	@PostMapping("/add")
-	public ResponseEntity<Customer> createCustomer(@RequestBody Customer customer) {
-	  try {
-	    Customer _customer = customerRepository.save(new Customer(customer.getName(), customer.getAddress()));
-	    return new ResponseEntity<>(_customer, HttpStatus.CREATED);
-	  } catch (Exception e) {
-	    return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-	  }
+	public Customer createCustomer(@Valid @RequestBody Customer customer) {
+		customer.setId(sequenceGeneratorService.generateSequence(Customer.SEQUENCE_NAME));
+		return customerRepository.save(customer);
 	}
-	
-	//Update Operation
-	
+
 	@PutMapping("/update/{id}")
-	public ResponseEntity<Customer> updateCustomer(@PathVariable("id") Integer id, @RequestBody Customer Customer) {
-	  Optional<Customer> customerData = customerRepository.findById(id);
+	public ResponseEntity<Customer> updateCustomer(@PathVariable(value = "id") Long customerId,
+			@Valid @RequestBody Customer customerDetails) throws ResourceNotFoundException {
+		Customer customer = customerRepository.findById(customerId)
+				.orElseThrow(() -> new ResourceNotFoundException("Customer not found for this id :: " + customerId));
 
-	  if (customerData.isPresent()) {
-	    Customer _customer = customerData.get();
-	    _customer.setName(Customer.getName());
-	    _customer.setAddress(Customer.getAddress());
-	    return new ResponseEntity<>(customerRepository.save(_customer), HttpStatus.OK);
-	  } else {
-	    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-	  }
+		customer.setEmailId(customerDetails.getEmailId());
+		customer.setLastName(customerDetails.getLastName());
+		customer.setFirstName(customerDetails.getFirstName());
+		final Customer updatedCustomer = customerRepository.save(customer);
+		return ResponseEntity.ok(updatedCustomer);
 	}
-	
-	//Delete Operation
-	
-	@DeleteMapping("/deleteAll")
-	public ResponseEntity<HttpStatus> deleteAllCustomers() {
-	  try {
-	    customerRepository.deleteAll();
-	    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-	  } catch (Exception e) {
-	    return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-	  }
-	}
-	
-	// Delete Operation
+
 	@DeleteMapping("/delete/{id}")
-	public ResponseEntity<HttpStatus> deleteTutorial(@PathVariable("id") Integer id) {
-	  try {
-	    customerRepository.deleteById(id);
-	    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-	  } catch (Exception e) {
-	    return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-	  }
-	}
+	public Map<String, Boolean> deleteCustomer(@PathVariable(value = "id") Long customerId)
+			throws ResourceNotFoundException {
+		Customer customer = customerRepository.findById(customerId)
+				.orElseThrow(() -> new ResourceNotFoundException("Customer not found for this id :: " + customerId));
 
+		customerRepository.delete(customer);
+		Map<String, Boolean> response = new HashMap<>();
+		response.put("deleted", Boolean.TRUE);
+		return response;
+	}
 }

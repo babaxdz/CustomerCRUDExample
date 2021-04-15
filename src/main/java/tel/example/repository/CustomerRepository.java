@@ -1,13 +1,11 @@
 package tel.example.repository;
 
-import java.util.List;
-
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
 import tel.example.model.Customer;
 
-public interface CustomerRepository extends MongoRepository<Customer, Integer> {
+@Repository
+public interface CustomerRepository extends MongoRepository<Customer, Long> {
 	
-	public List<Customer> findByName(String name);
-
 }

@@ -1,56 +1,76 @@
 package tel.example.model;
 
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "customers")
+@Document (collection = "customers")
 public class Customer {
 
+	@Transient
+    public static final String SEQUENCE_NAME = "users_sequence";
+	
 	@Id
-	private Integer id;
+	private long id;
 	
-	private String name;
+	@NotBlank
+    @Size(max=100)
+    @Indexed(unique=true)
+	private String firstName;
+	private String lastName;
 	
-	private String address;
+	@NotBlank
+    @Size(max=100)
+    @Indexed(unique=true)
+	private String emailId;
 	
 	public Customer() {
 		
 	}
-
-	public Customer(String name, String address) {
-		super();
-		this.name = name;
-		this.address = address;
+	
+	public Customer(String firstName, String lastName, String emailId) {
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.emailId = emailId;
 	}
-
-	public Integer getId() {
+	
+	public long getId() {
 		return id;
 	}
-
-	public void setId(Integer id) {
+	public void setId(long id) {
 		this.id = id;
 	}
-
-	public String getName() {
-		return name;
+	
+	public String getFirstName() {
+		return firstName;
 	}
-
-	public void setName(String name) {
-		this.name = name;
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
 	}
-
-	public String getAddress() {
-		return address;
+	
+	public String getLastName() {
+		return lastName;
 	}
-
-	public void setAddress(String address) {
-		this.address = address;
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+	
+	public String getEmailId() {
+		return emailId;
+	}
+	public void setEmailId(String emailId) {
+		this.emailId = emailId;
 	}
 
 	@Override
 	public String toString() {
-		return "Customer [id=" + id + ", name=" + name + ", address=" + address + "]";
+		return "Customer [id=" + id + ", firstName=" + firstName + ", lastName=" + lastName + ", emailId=" + emailId
+				+ "]";
 	}
-	
+
 }
